@@ -71,7 +71,7 @@ func setupIssueCallback(handle *githubevents.EventHandler, client *github.Client
 			//fmt.Println(github.Stringify(event))
 			// Let's create an Issue alerting us to what has been done
 			issue_title := "New Repo Permisions Applied Successfully"
-			issue_body := "The main branch was created, and it was protected so that only properly reviewed code can be commited to the main branch\n\nCC @dav1d-c"
+			issue_body := "The main branch was created, and it was protected so that only properly reviewed code can be commited to the main branch\n\nCC @" + gh_username_issue_mention
 			issue_repo := event.GetRepo().GetName()
 			//issue_user := event.GetSender().GetLogin()
 			//issue_org := event.GetOrg().GetName()
@@ -80,7 +80,7 @@ func setupIssueCallback(handle *githubevents.EventHandler, client *github.Client
 			if err != nil {
 				log.Println(err)
 			}
-			fmt.Printf("Successfully created new issue: %v in repo: %v\n", new_issue.GetTitle(), new_issue.GetRepository().GetName())
+			fmt.Printf("Successfully created new issue: %v in repo: %v\n", new_issue.GetTitle(), event.GetRepo().GetName())
 			fmt.Println(github.Stringify(new_issue))
 			return nil
 		})
@@ -95,15 +95,6 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			// DEBUG
 			fmt.Println("Processing " + eventName + " event with ID " + deliveryID + "...")
 			//fmt.Println(github.Stringify(event))
-
-			// repo, _, err := client.Repositories.Get(ctx, gh_organization_name, event.GetRepo().GetName())
-			// if err != nil {
-			// 	log.Fatal(err)
-			// }
-			// // DEBUG
-			// //fmt.Printf("Request Response Code: %v %v\n", resp.Response.StatusCode, resp.Response.Status)
-			// fmt.Printf("Master Branch of %v is %v.\n", repo.GetName(), repo.GetDefaultBranch())
-			// //fmt.Println(github.Stringify(repo))
 
 			var repo *github.Repository
 			repo = event.GetRepo()
@@ -159,7 +150,7 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			commit_email := user.GetEmail()
 			// Has the user marked their email address as private?
 			if commit_email == "" {
-				commit_email = "private@email.com"
+				commit_email = gh_private_email
 			}
 			author := &github.CommitAuthor{Date: &date, Name: &commit_login, Email: &commit_email}
 			commit := &github.Commit{Author: author, Message: &commit_msg, Tree: tree, Parents: []*github.Commit{parent.Commit}}
