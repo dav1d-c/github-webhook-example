@@ -72,8 +72,6 @@ func setupIssueCallback(handle *githubevents.EventHandler, client *github.Client
 			issue_title := "New Repo Permisions Applied Successfully"
 			issue_body := "After the main branch was created, it was protected so that only properly reviewed code can be commited to the main branch\n\nCC @" + gh_username_issue_mention
 			issue_repo := event.GetRepo().GetName()
-			//issue_user := event.GetSender().GetLogin()
-			//issue_org := event.GetOrg().GetName()
 			i := &github.IssueRequest{Title: &issue_title, Body: &issue_body}
 			new_issue, _, err := client.Issues.Create(ctx, gh_organization_name, issue_repo, i)
 			if err != nil {
@@ -82,7 +80,7 @@ func setupIssueCallback(handle *githubevents.EventHandler, client *github.Client
 
 			// DEBUG
 			fmt.Printf("Successfully created new issue: %v in repo: %v\n", new_issue.GetTitle(), event.GetRepo().GetName())
-			fmt.Println(github.Stringify(new_issue))
+			//fmt.Println(github.Stringify(new_issue))
 			return nil
 		})
 
