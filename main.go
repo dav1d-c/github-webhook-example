@@ -69,7 +69,7 @@ func setupIssueCallback(handle *githubevents.EventHandler, client *github.Client
 			//fmt.Println(github.Stringify(event))
 
 			// Let's create an Issue alerting us to what has been done
-			issue_title := "New Repo Permisions Applied Successfully"
+			issue_title := "New Repository Protection Applied Successfully"
 			issue_body := "After the main branch was created, it was protected so that only properly reviewed code can be commited to the main branch\n\nCC @" + gh_username_issue_mention
 			issue_repo := event.GetRepo().GetName()
 			i := &github.IssueRequest{Title: &issue_title, Body: &issue_body}
