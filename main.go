@@ -167,6 +167,7 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 				log.Println(err)
 			}
 			fmt.Println(github.Stringify(protections.GetRequiredPullRequestReviews()))
+
 			return nil
 		})
 }
