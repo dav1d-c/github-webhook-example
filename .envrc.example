@@ -1,0 +1,8 @@
+# Configuration values set for github-webhook-example
+
+export GITHUB_PERSONAL_ACCESS_TOKEN="aabbccddeeff1234567890"
+export GITHUB_WEBHOOK_SECRET="abcdefghijklmnopqrstuvwxyz"
+export GITHUB_ORG_NAME="myorg"
+export GITHUB_COMMENT_MENTION="myusername"
+export GITHUB_EMAIL_PRIVATE="private@email.com"
+
