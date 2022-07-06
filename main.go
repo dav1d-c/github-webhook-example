@@ -3,11 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/cbrgm/githubevents/githubevents"
@@ -69,9 +67,10 @@ func setupIssueCallback(handle *githubevents.EventHandler, client *github.Client
 			// DEBUG
 			fmt.Println("Processing " + eventName + " event with ID " + deliveryID + "...")
 			//fmt.Println(github.Stringify(event))
+
 			// Let's create an Issue alerting us to what has been done
 			issue_title := "New Repo Permisions Applied Successfully"
-			issue_body := "The main branch was created, and it was protected so that only properly reviewed code can be commited to the main branch\n\nCC @" + gh_username_issue_mention
+			issue_body := "After the main branch was created, it was protected so that only properly reviewed code can be commited to the main branch\n\nCC @" + gh_username_issue_mention
 			issue_repo := event.GetRepo().GetName()
 			//issue_user := event.GetSender().GetLogin()
 			//issue_org := event.GetOrg().GetName()
@@ -80,6 +79,8 @@ func setupIssueCallback(handle *githubevents.EventHandler, client *github.Client
 			if err != nil {
 				log.Println(err)
 			}
+
+			// DEBUG
 			fmt.Printf("Successfully created new issue: %v in repo: %v\n", new_issue.GetTitle(), event.GetRepo().GetName())
 			fmt.Println(github.Stringify(new_issue))
 			return nil
@@ -96,9 +97,7 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			fmt.Println("Processing " + eventName + " event with ID " + deliveryID + "...")
 			//fmt.Println(github.Stringify(event))
 
-			var repo *github.Repository
-			repo = event.GetRepo()
-
+			var repo *github.Repository = event.GetRepo()
 			// Create the first branch via first commit of README.md
 			var baseRef *github.Reference
 			baseRef, _, err := client.Git.GetRef(ctx, gh_organization_name, repo.GetName(), "refs/heads/"+repo.GetDefaultBranch())
@@ -107,12 +106,10 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 				return err
 			}
 
-			fmt.Println("Created BaseRef")
-
 			// Create a tree with what to commit.
 			entries := []*github.TreeEntry{}
 			entries = append(entries, &github.TreeEntry{Path: github.String(string("README.md")), Type: github.String("blob"),
-				Content: github.String(string("# " + repo.GetName() + "\nYour Organization loves documentation, don't forget to update this file with specific information about this project!\n")),
+				Content: github.String(string("# " + repo.GetName() + "\nYour Organization **loves documentation,** don't forget to update this file with specific information about this project!\n")),
 				Mode:    github.String("100644")})
 			var tree *github.Tree
 			tree, _, err = client.Git.CreateTree(ctx, gh_organization_name, repo.GetName(), *baseRef.Object.SHA, entries)
@@ -120,8 +117,6 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 				fmt.Printf("\nerror: %v\n", err)
 				return err
 			}
-
-			fmt.Println("Created new Tree")
 
 			// Get the parent commit to attach the commit to.
 			parent, _, err := client.Repositories.GetCommit(ctx, gh_organization_name, repo.GetName(), *baseRef.Object.SHA, nil)
@@ -132,8 +127,6 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			// This is not always populated, but is needed.
 			parent.Commit.SHA = parent.SHA
 
-			fmt.Println("Fetched Commit")
-
 			// get the GitHub user object
 			user, _, err := client.Users.Get(ctx, "")
 			if err != nil {
@@ -141,11 +134,9 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 				return err
 			}
 
-			fmt.Println("Fetched User")
-
 			// Create the commit using the tree.
 			date := time.Now()
-			commit_msg := "Setting up Branch Protections for " + repo.GetName()
+			commit_msg := "Setting up Branch Protection for " + repo.GetName()
 			commit_login := user.GetLogin()
 			commit_email := user.GetEmail()
 			// Has the user marked their email address as private?
@@ -160,8 +151,6 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 				return err
 			}
 
-			fmt.Println("Created Commit using Tree")
-
 			// Attach the commit to the desired branch.
 			baseRef.Object.SHA = newCommit.SHA
 			_, _, err = client.Git.UpdateRef(ctx, gh_organization_name, repo.GetName(), baseRef, false)
@@ -169,8 +158,6 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 				fmt.Printf("\nerror: %v\n", err)
 				return err
 			}
-
-			fmt.Println("Attached Commit to Branch")
 
 			// Setup Branch Protection via ProtectionRequest
 			prr := &github.PullRequestReviewsEnforcementRequest{RequiredApprovingReviewCount: 2, RequireCodeOwnerReviews: true, DismissStaleReviews: false}
@@ -227,15 +214,4 @@ func checkValuesFromEnv() {
 	}
 }
 
-// readFileContents
-func readFileContents(fileName string) string {
-	// take care of reading in "secrets", first for the webhook
-	content, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		log.Fatal(err)
-	}
-	// clean up the value we read in
-	fileContents := strings.TrimSuffix(string(content), "\n")
-
-	return fileContents
-}
+// FIN
