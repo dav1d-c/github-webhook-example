@@ -13,10 +13,9 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// Globals
+// globals
 var gh_webhook_secret_key string = ""
 var gh_personal_access_token string = ""
-var gh_organization_name string = ""
 var gh_username_issue_mention string = ""
 var gh_private_email string = ""
 var gh_code_review_min int = 2
@@ -46,6 +45,7 @@ func main() {
 	reportLoadedConfigValues()
 
 	// Pass the eventHandler to funcs that define callbacks to do the things
+	setupErorrCallback(handle)
 	setupProtectCallback(handle, client, ctx)
 	setupIssueCallback(handle, client, ctx)
 
@@ -77,6 +77,8 @@ func setupIssueCallback(handle *githubevents.EventHandler, client *github.Client
 			issue_title := "New Repository Protection Applied Successfully"
 			issue_body := "After the main branch was created, it was protected so that only properly reviewed code can be commited to the main branch\n\nCC @" + gh_username_issue_mention
 			issue_repo := event.GetRepo().GetName()
+			gh_organization_name := event.GetOrg().GetLogin()
+
 			i := &github.IssueRequest{Title: &issue_title, Body: &issue_body}
 			new_issue, _, err := client.Issues.Create(ctx, gh_organization_name, issue_repo, i)
 			if err != nil {
@@ -100,6 +102,7 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			log.Println("[setupProtectCallback] Processing " + eventName + " event with ID " + deliveryID + "...")
 			//log.Println(github.Stringify(event))
 
+			gh_organization_name := event.GetOrg().GetLogin()
 			var repo *github.Repository = event.GetRepo()
 			// Create the first branch via first commit of README.md
 			var baseRef *github.Reference
@@ -175,6 +178,19 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 		})
 }
 
+// setupErrorCallback
+func setupErorrCallback(handle *githubevents.EventHandler) {
+	// catch any unhandle errors, so we can certain that we have at least captured and logged them for analysis later
+	// perhaps this will double report some errors, but I would rather have some errors double reported over the chance of missing some
+	handle.OnError(
+		func(deliveryID string, eventName string, event interface{}, err error) error {
+			// DEBUG
+			log.Println("[setupErrorCallback] Encountered ERROR while processing " + eventName + " event with ID " + deliveryID + "...")
+			log.Println(err)
+			return nil
+		})
+}
+
 // printRateLimitUserInfo
 func printRateLimitUserInfo(client *github.Client, ctx context.Context) {
 	// get the GitHub user object
@@ -214,7 +230,6 @@ func autoLoadUserValues(client *github.Client, ctx context.Context) {
 func readValuesFromEnv() {
 	gh_webhook_secret_key = os.Getenv("GITHUB_WEBHOOK_SECRET")
 	gh_personal_access_token = os.Getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
-	gh_organization_name = os.Getenv("GITHUB_ORG_NAME")
 	gh_username_issue_mention = os.Getenv("GITHUB_COMMENT_MENTION")
 	gh_private_email = os.Getenv("GITHUB_EMAIL_PRIVATE")
 	tmp_int, err := strconv.Atoi(os.Getenv("GITHUB_REVIEW_MIN_COUNT"))
@@ -238,9 +253,6 @@ func checkValuesFromEnv() {
 	if gh_personal_access_token == "" {
 		log.Fatal("Could not read GITHUB_PERSONAL_ACCESS_TOKEN value in from the environment")
 	}
-	if gh_organization_name == "" {
-		log.Fatal("Could not read GITHUB_ORG_NAME value in from the environment")
-	}
 	// Set reasonable defaults for the last 2 inputs, should they be nil
 	if gh_username_issue_mention == "" {
 		gh_username_issue_mention = "no-such-user"
@@ -255,10 +267,9 @@ func reportLoadedConfigValues() {
 	log.Println("The process is running with the following configuration values:")
 	log.Println("GITHUB_WEBHOOK_SECRET=*************** [REDACTED]")
 	log.Println("GITHUB_PERSONAL_ACCESS_TOKEN=*************** [REDACTED]")
-	log.Printf("GITHUB_ORG_NAME=%v", gh_organization_name)
 	log.Printf("GITHUB_COMMENT_MENTION=%v", gh_username_issue_mention)
 	log.Printf("GITHUB_EMAIL_PRIVATE=%v", gh_private_email)
-	log.Printf("GITHUB_REVIEW_MIN_COUNT=%v", github.Stringify(gh_code_review_min))
+	log.Printf("GITHUB_REVIEW_MIN_COUNT=%v", gh_code_review_min)
 	log.Println()
 }
 

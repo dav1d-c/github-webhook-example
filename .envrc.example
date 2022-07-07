@@ -1,9 +1,13 @@
 # Configuration values set for github-webhook-example
 
+# GitHub Personal Access Token (must have access to your GITHUB_ORG_NAME)
 export GITHUB_PERSONAL_ACCESS_TOKEN="aabbccddeeff1234567890"
+# the secret that one is going to use to confgiure the webhook with
 export GITHUB_WEBHOOK_SECRET="abcdefghijklmnopqrstuvwxyz"
-export GITHUB_ORG_NAME="myorg"
-export GITHUB_COMMENT_MENTION="myusername"
+# below only needs to be set if one wants it to be different from the PAT owner
+#export GITHUB_COMMENT_MENTION="myusername"
+# below only needs to be set if the PAT owner has email display status set to "private"
 export GITHUB_EMAIL_PRIVATE="private@email.com"
+# minimum required reviews before a PR can be merged into main (defaults to 3 if not set)
 export GITHUB_REVIEW_MIN_COUNT=3
 
