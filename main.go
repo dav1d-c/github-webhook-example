@@ -47,7 +47,6 @@ func main() {
 	// Pass the eventHandler to funcs that define callbacks to do the things
 	setupErorrCallback(handle)
 	setupProtectCallback(handle, client, ctx)
-	setupIssueCallback(handle, client, ctx)
 
 	// Setup a path to handle callbacks with
 	http.HandleFunc("/webhook", func(w http.ResponseWriter, r *http.Request) {
@@ -61,36 +60,6 @@ func main() {
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}
-}
-
-// setupIssueCallback
-func setupIssueCallback(handle *githubevents.EventHandler, client *github.Client, ctx context.Context) {
-
-	// Registrer a callback to handle the event when a Repo is created in this Org
-	handle.OnRepositoryEventCreated(
-		func(deliveryID string, eventName string, event *github.RepositoryEvent) error {
-			// DEBUG
-			log.Println("[setupIssueCallback] Processing " + eventName + " event with ID " + deliveryID + "...")
-			//log.Println(github.Stringify(event))
-
-			// Let's create an Issue alerting us to what has been done
-			issue_title := "New Repository Protection Applied Successfully"
-			issue_body := "After the main branch was created, it was protected so that only properly reviewed code can be commited to the main branch\n\nCC @" + gh_username_issue_mention
-			issue_repo := event.GetRepo().GetName()
-			gh_organization_name := event.GetOrg().GetLogin()
-
-			i := &github.IssueRequest{Title: &issue_title, Body: &issue_body}
-			new_issue, _, err := client.Issues.Create(ctx, gh_organization_name, issue_repo, i)
-			if err != nil {
-				log.Println(err)
-			}
-
-			// DEBUG
-			log.Printf("Successfully created new issue: %v in repo: %v\n", new_issue.GetTitle(), event.GetRepo().GetName())
-			//log.Println(github.Stringify(new_issue))
-			return nil
-		})
-
 }
 
 // setupProtectCallback
@@ -171,8 +140,25 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			protections, _, err := client.Repositories.UpdateBranchProtection(ctx, gh_organization_name, repo.GetName(), repo.GetDefaultBranch(), pr)
 			if err != nil {
 				log.Println(err)
+				return err
 			}
 			log.Println(github.Stringify(protections.GetRequiredPullRequestReviews()))
+
+			// Let's create an Issue alerting us to what has been done (but only if we made it this far!)
+			issue_title := "New Repository Protection Applied Successfully"
+			issue_body := "After the main branch was created, it was protected so that only properly reviewed code (with " + strconv.Itoa(gh_code_review_min) + " or more reviews) can be commited to the main branch\n\nCC @" + gh_username_issue_mention
+			issue_repo := event.GetRepo().GetName()
+
+			i := &github.IssueRequest{Title: &issue_title, Body: &issue_body}
+			new_issue, _, err := client.Issues.Create(ctx, gh_organization_name, issue_repo, i)
+			if err != nil {
+				log.Println(err)
+				return err
+			}
+
+			// DEBUG
+			log.Printf("Successfully created new issue: %v in repo: %v\n", new_issue.GetTitle(), event.GetRepo().GetName())
+			//log.Println(github.Stringify(new_issue))
 
 			return nil
 		})
