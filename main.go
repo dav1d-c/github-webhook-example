@@ -241,7 +241,8 @@ func readValuesFromEnv() {
 		log.Println("Unable to determine Int value from Environment vairable GITHUB_REVIEW_MIN_COUNT, defaulting to 3.")
 	} else {
 		gh_code_review_min = tmp_int
-		log.Printf("Read in %v as the desired minimum number of code reviewes", gh_code_review_min)
+		// DEBUG
+		//log.Printf("Read in %v as the desired minimum number of code reviewes", gh_code_review_min)
 	}
 }
 
