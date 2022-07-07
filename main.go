@@ -107,7 +107,7 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			// Create a tree with what to commit.
 			entries := []*github.TreeEntry{}
 			entries = append(entries, &github.TreeEntry{Path: github.String(string("README.md")), Type: github.String("blob"),
-				Content: github.String(string("# " + repo.GetName() + "\nYour Organization **loves documentation,** don't forget to update this file with specific information about this project!\n")),
+				Content: github.String(string("# " + repo.GetName() + "\nYour Organization **loves <3 documentation,** don't forget to update this file with specific information about this project!\n")),
 				Mode:    github.String("100644")})
 			var tree *github.Tree
 			tree, _, err = client.Git.CreateTree(ctx, gh_organization_name, repo.GetName(), *baseRef.Object.SHA, entries)

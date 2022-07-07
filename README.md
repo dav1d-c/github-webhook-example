@@ -44,6 +44,16 @@ When creating new GitHub repositories under your Organization, it is important t
 * Public *(A limitation of my free service tier GitHub Organization)*
 * Add a README file *(initializes the the default `main` branch, so that the code can protect it)*
 
+Testing pushes to `main` branch of the new Repoisitory using the git cli should now restrict direct pushes by non-owners:
+
+```
+ERROR: Permission to [Your-Org]/[Your-New-Repo].git denied to [non-owner-username].
+fatal: Could not read from remote repository.
+
+Please make sure you have the correct access rights
+and the repository exists.
+```
+
 ## Process Diagram
 
 @TODO
