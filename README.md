@@ -73,11 +73,15 @@ and the repository exists.
 
 ## Interesting
 
-@TODO
+An astutue observer would notice that the code used to update the README.md file contents is technically not required, but I was using this code to experiment in order to challenge myself and see if I could trying creating the very first commit within the Repository (aka initialize the `main` branch). I managed to find this discussion, that goes back 10 years:
+
+* https://stackoverflow.com/questions/9670604/github-v3-api-how-to-create-initial-commit-for-my-shiny-new-repository
+
+Which also has a recent update from last year showing that there is a GitHub API end point does exist to accomplish this, but at the time of writing of this README.md I still have not found a way to accomplish this using `go-github`.
 
 ## Other/Future Considerations
 
-* How to identify and apply protections to already created Repositories? *(migration of existing Repos)*
+* How to identify and apply Branch Protections to already created Repositories? *(migration of existing Repos)*
 * Should creation of the webhook be configure via the API at some point? *(instead of relying on manual configuration)*
 * Should Repostiory Creation be brokered through some kind of internal system? *(so that we can enforce `auto_init` of the first commit in the default branch and the correct visibility setting? Reduces chances of failing to apply protections)*
 
