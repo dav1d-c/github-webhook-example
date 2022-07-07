@@ -108,7 +108,7 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			var baseRef *github.Reference
 			baseRef, _, err := client.Git.GetRef(ctx, gh_organization_name, repo.GetName(), "refs/heads/"+repo.GetDefaultBranch())
 			if err != nil {
-				log.Printf("\nerror: %v\n", err)
+				log.Printf("Error retrieving Reference: %v\n", err)
 				return err
 			}
 
@@ -120,14 +120,14 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			var tree *github.Tree
 			tree, _, err = client.Git.CreateTree(ctx, gh_organization_name, repo.GetName(), *baseRef.Object.SHA, entries)
 			if err != nil {
-				log.Printf("\nerror: %v\n", err)
+				log.Printf("Error creating Tree Entry: %v\n", err)
 				return err
 			}
 
 			// Get the parent commit to attach the commit to.
 			parent, _, err := client.Repositories.GetCommit(ctx, gh_organization_name, repo.GetName(), *baseRef.Object.SHA, nil)
 			if err != nil {
-				log.Printf("\nerror: %v\n", err)
+				log.Printf("Error retrieiving commit: %v\n", err)
 				return err
 			}
 			// This is not always populated, but is needed.
@@ -136,7 +136,7 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			// get the GitHub user object
 			user, _, err := client.Users.Get(ctx, "")
 			if err != nil {
-				log.Printf("\nerror: %v\n", err)
+				log.Printf("setupProtectCallback] Error retrieving User object: %v\n", err)
 				return err
 			}
 
@@ -153,7 +153,7 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			commit := &github.Commit{Author: author, Message: &commit_msg, Tree: tree, Parents: []*github.Commit{parent.Commit}}
 			newCommit, _, err := client.Git.CreateCommit(ctx, gh_organization_name, repo.GetName(), commit)
 			if err != nil {
-				log.Printf("\nerror: %v\n", err)
+				log.Printf("Error creating commit: %v\n", err)
 				return err
 			}
 
@@ -161,7 +161,7 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			baseRef.Object.SHA = newCommit.SHA
 			_, _, err = client.Git.UpdateRef(ctx, gh_organization_name, repo.GetName(), baseRef, false)
 			if err != nil {
-				log.Printf("\nerror: %v\n", err)
+				log.Printf("Error Updating Reference: %v\n", err)
 				return err
 			}
 
@@ -196,7 +196,7 @@ func printRateLimitUserInfo(client *github.Client, ctx context.Context) {
 	// get the GitHub user object
 	user, resp, err := client.Users.Get(ctx, "")
 	if err != nil {
-		log.Printf("\nerror: %v\n", err)
+		log.Printf("[printRateLimitUserInfo] Error retrieving User object: %v\n", err)
 		return
 	}
 	log.Printf("Effective User: %v\n", user.GetLogin())
@@ -209,7 +209,7 @@ func autoLoadUserValues(client *github.Client, ctx context.Context) {
 	// get the GitHub user object
 	user, _, err := client.Users.Get(ctx, "")
 	if err != nil {
-		log.Printf("\nerror: %v\n", err)
+		log.Printf("[autoLoadUserValues] Error retrieving User object: %v\n", err)
 		return
 	}
 
