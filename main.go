@@ -19,7 +19,7 @@ var gh_personal_access_token string = ""
 var gh_organization_name string = ""
 var gh_username_issue_mention string = ""
 var gh_private_email string = ""
-var gh_code_review_min int
+var gh_code_review_min int = 2
 
 // main
 func main() {
@@ -40,6 +40,10 @@ func main() {
 
 	// Print some information about the rate limit associated with the user whose Personal Access Token we are using here
 	printRateLimitUserInfo(client, ctx)
+	// Attempt to fill-in user information from the current client context
+	autoLoadUserValues(client, ctx)
+	// Some helpful information about loaded configuration values
+	reportLoadedConfigValues()
 
 	// Pass the eventHandler to funcs that define callbacks to do the things
 	setupProtectCallback(handle, client, ctx)
@@ -66,7 +70,7 @@ func setupIssueCallback(handle *githubevents.EventHandler, client *github.Client
 	handle.OnRepositoryEventCreated(
 		func(deliveryID string, eventName string, event *github.RepositoryEvent) error {
 			// DEBUG
-			log.Println("Processing " + eventName + " event with ID " + deliveryID + "...")
+			log.Println("[setupIssueCallback] Processing " + eventName + " event with ID " + deliveryID + "...")
 			//log.Println(github.Stringify(event))
 
 			// Let's create an Issue alerting us to what has been done
@@ -93,7 +97,7 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 	handle.OnRepositoryEventCreated(
 		func(deliveryID string, eventName string, event *github.RepositoryEvent) error {
 			// DEBUG
-			log.Println("Processing " + eventName + " event with ID " + deliveryID + "...")
+			log.Println("[setupProtectCallback] Processing " + eventName + " event with ID " + deliveryID + "...")
 			//log.Println(github.Stringify(event))
 
 			var repo *github.Repository = event.GetRepo()
@@ -108,7 +112,7 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			// Create a tree with what to commit.
 			entries := []*github.TreeEntry{}
 			entries = append(entries, &github.TreeEntry{Path: github.String(string("README.md")), Type: github.String("blob"),
-				Content: github.String(string("# " + repo.GetName() + "\nYour Organization **loves <3 documentation,** don't forget to update this file with specific information about this project!\n")),
+				Content: github.String(string("# " + repo.GetName() + "\nYour Organization **loves <3 documentation,** please don't forget to update this file with specific information about this project!\n")),
 				Mode:    github.String("100644")})
 			var tree *github.Tree
 			tree, _, err = client.Git.CreateTree(ctx, gh_organization_name, repo.GetName(), *baseRef.Object.SHA, entries)
@@ -183,6 +187,15 @@ func printRateLimitUserInfo(client *github.Client, ctx context.Context) {
 	// Rate.Limit should most likely be 5000 when authorized.
 	log.Printf("Rate: %#v\n", resp.Rate)
 	log.Println("")
+}
+
+func autoLoadUserValues(client *github.Client, ctx context.Context) {
+	// get the GitHub user object
+	user, _, err := client.Users.Get(ctx, "")
+	if err != nil {
+		log.Printf("\nerror: %v\n", err)
+		return
+	}
 
 	// Can we attempt to replace username and email values, if none where provided via the Environment?
 	if user.GetLogin() != "" {
@@ -204,12 +217,15 @@ func readValuesFromEnv() {
 	gh_organization_name = os.Getenv("GITHUB_ORG_NAME")
 	gh_username_issue_mention = os.Getenv("GITHUB_COMMENT_MENTION")
 	gh_private_email = os.Getenv("GITHUB_EMAIL_PRIVATE")
-	gh_code_review_min, err := strconv.Atoi(os.Getenv("GITHUB_REVIEW_MIN_COUNT"))
+	tmp_int, err := strconv.Atoi(os.Getenv("GITHUB_REVIEW_MIN_COUNT"))
 	if err != nil {
-		// Default to 2 if we are unable to parse the Int from a string
+		// Default to 3 if we are unable to parse the Int from a string
 		gh_code_review_min = 3
+		// DEBUG
+		//log.Println(err)
 		log.Println("Unable to determine Int value from Environment vairable GITHUB_REVIEW_MIN_COUNT, defaulting to 3.")
 	} else {
+		gh_code_review_min = tmp_int
 		log.Printf("Read in %v as the desired minimum number of code reviewes", gh_code_review_min)
 	}
 }
@@ -232,6 +248,18 @@ func checkValuesFromEnv() {
 	if gh_private_email == "" {
 		gh_private_email = "private@email.com"
 	}
+}
+
+// reportLoadedConfigValues
+func reportLoadedConfigValues() {
+	log.Println("The process is running with the following configuration values:")
+	log.Println("GITHUB_WEBHOOK_SECRET=*************** [REDACTED]")
+	log.Println("GITHUB_PERSONAL_ACCESS_TOKEN=*************** [REDACTED]")
+	log.Printf("GITHUB_ORG_NAME=%v", gh_organization_name)
+	log.Printf("GITHUB_COMMENT_MENTION=%v", gh_username_issue_mention)
+	log.Printf("GITHUB_EMAIL_PRIVATE=%v", gh_private_email)
+	log.Printf("GITHUB_REVIEW_MIN_COUNT=%v", github.Stringify(gh_code_review_min))
+	log.Println()
 }
 
 // FIN
