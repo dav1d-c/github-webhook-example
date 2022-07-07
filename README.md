@@ -29,7 +29,7 @@ Next, let's ensure we have required GO modules and start up the webhook listener
 
 ```
 go get
-go run main.c
+go run main.go
 ```
 
 Also setup some Ingress (using ngrok) in another terminal window:
