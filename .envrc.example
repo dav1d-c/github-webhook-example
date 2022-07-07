@@ -5,4 +5,5 @@ export GITHUB_WEBHOOK_SECRET="abcdefghijklmnopqrstuvwxyz"
 export GITHUB_ORG_NAME="myorg"
 export GITHUB_COMMENT_MENTION="myusername"
 export GITHUB_EMAIL_PRIVATE="private@email.com"
+export GITHUB_REVIEW_MIN_COUNT=3
 

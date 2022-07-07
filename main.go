@@ -2,10 +2,10 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/cbrgm/githubevents/githubevents"
@@ -19,11 +19,12 @@ var gh_personal_access_token string = ""
 var gh_organization_name string = ""
 var gh_username_issue_mention string = ""
 var gh_private_email string = ""
+var gh_code_review_min int
 
 // main
 func main() {
 	// Say hello
-	fmt.Println("Example GitHub Webhook Handler is Starting Up Now...")
+	log.Println("Example GitHub Webhook Handler is Starting Up Now...")
 
 	// Read in parameters from ENV (ideally set using direnv)
 	readValuesFromEnv()
@@ -38,7 +39,7 @@ func main() {
 	client := github.NewClient(tc)
 
 	// Print some information about the rate limit associated with the user whose Personal Access Token we are using here
-	printRateLimitInfo(client, ctx)
+	printRateLimitUserInfo(client, ctx)
 
 	// Pass the eventHandler to funcs that define callbacks to do the things
 	setupProtectCallback(handle, client, ctx)
@@ -48,7 +49,7 @@ func main() {
 	http.HandleFunc("/webhook", func(w http.ResponseWriter, r *http.Request) {
 		err := handle.HandleEventRequest(r)
 		if err != nil {
-			fmt.Println("error")
+			log.Printf("error %v", err)
 		}
 	})
 
@@ -65,8 +66,8 @@ func setupIssueCallback(handle *githubevents.EventHandler, client *github.Client
 	handle.OnRepositoryEventCreated(
 		func(deliveryID string, eventName string, event *github.RepositoryEvent) error {
 			// DEBUG
-			fmt.Println("Processing " + eventName + " event with ID " + deliveryID + "...")
-			//fmt.Println(github.Stringify(event))
+			log.Println("Processing " + eventName + " event with ID " + deliveryID + "...")
+			//log.Println(github.Stringify(event))
 
 			// Let's create an Issue alerting us to what has been done
 			issue_title := "New Repository Protection Applied Successfully"
@@ -79,8 +80,8 @@ func setupIssueCallback(handle *githubevents.EventHandler, client *github.Client
 			}
 
 			// DEBUG
-			fmt.Printf("Successfully created new issue: %v in repo: %v\n", new_issue.GetTitle(), event.GetRepo().GetName())
-			//fmt.Println(github.Stringify(new_issue))
+			log.Printf("Successfully created new issue: %v in repo: %v\n", new_issue.GetTitle(), event.GetRepo().GetName())
+			//log.Println(github.Stringify(new_issue))
 			return nil
 		})
 
@@ -92,15 +93,15 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 	handle.OnRepositoryEventCreated(
 		func(deliveryID string, eventName string, event *github.RepositoryEvent) error {
 			// DEBUG
-			fmt.Println("Processing " + eventName + " event with ID " + deliveryID + "...")
-			//fmt.Println(github.Stringify(event))
+			log.Println("Processing " + eventName + " event with ID " + deliveryID + "...")
+			//log.Println(github.Stringify(event))
 
 			var repo *github.Repository = event.GetRepo()
 			// Create the first branch via first commit of README.md
 			var baseRef *github.Reference
 			baseRef, _, err := client.Git.GetRef(ctx, gh_organization_name, repo.GetName(), "refs/heads/"+repo.GetDefaultBranch())
 			if err != nil {
-				fmt.Printf("\nerror: %v\n", err)
+				log.Printf("\nerror: %v\n", err)
 				return err
 			}
 
@@ -112,14 +113,14 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			var tree *github.Tree
 			tree, _, err = client.Git.CreateTree(ctx, gh_organization_name, repo.GetName(), *baseRef.Object.SHA, entries)
 			if err != nil {
-				fmt.Printf("\nerror: %v\n", err)
+				log.Printf("\nerror: %v\n", err)
 				return err
 			}
 
 			// Get the parent commit to attach the commit to.
 			parent, _, err := client.Repositories.GetCommit(ctx, gh_organization_name, repo.GetName(), *baseRef.Object.SHA, nil)
 			if err != nil {
-				fmt.Printf("\nerror: %v\n", err)
+				log.Printf("\nerror: %v\n", err)
 				return err
 			}
 			// This is not always populated, but is needed.
@@ -128,7 +129,7 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			// get the GitHub user object
 			user, _, err := client.Users.Get(ctx, "")
 			if err != nil {
-				fmt.Printf("\nerror: %v\n", err)
+				log.Printf("\nerror: %v\n", err)
 				return err
 			}
 
@@ -145,7 +146,7 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			commit := &github.Commit{Author: author, Message: &commit_msg, Tree: tree, Parents: []*github.Commit{parent.Commit}}
 			newCommit, _, err := client.Git.CreateCommit(ctx, gh_organization_name, repo.GetName(), commit)
 			if err != nil {
-				fmt.Printf("\nerror: %v\n", err)
+				log.Printf("\nerror: %v\n", err)
 				return err
 			}
 
@@ -153,35 +154,47 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			baseRef.Object.SHA = newCommit.SHA
 			_, _, err = client.Git.UpdateRef(ctx, gh_organization_name, repo.GetName(), baseRef, false)
 			if err != nil {
-				fmt.Printf("\nerror: %v\n", err)
+				log.Printf("\nerror: %v\n", err)
 				return err
 			}
 
 			// Setup Branch Protection via ProtectionRequest
-			prr := &github.PullRequestReviewsEnforcementRequest{RequiredApprovingReviewCount: 2, RequireCodeOwnerReviews: true, DismissStaleReviews: false}
+			prr := &github.PullRequestReviewsEnforcementRequest{RequiredApprovingReviewCount: gh_code_review_min, RequireCodeOwnerReviews: true, DismissStaleReviews: false}
 			pr := &github.ProtectionRequest{RequiredPullRequestReviews: prr, AllowForcePushes: github.Bool(false)}
 			protections, _, err := client.Repositories.UpdateBranchProtection(ctx, gh_organization_name, repo.GetName(), repo.GetDefaultBranch(), pr)
 			if err != nil {
 				log.Println(err)
 			}
-			fmt.Println(github.Stringify(protections.GetRequiredPullRequestReviews()))
+			log.Println(github.Stringify(protections.GetRequiredPullRequestReviews()))
 
 			return nil
 		})
 }
 
-// printRateLimitInfo
-func printRateLimitInfo(client *github.Client, ctx context.Context) {
+// printRateLimitUserInfo
+func printRateLimitUserInfo(client *github.Client, ctx context.Context) {
 	// get the GitHub user object
 	user, resp, err := client.Users.Get(ctx, "")
 	if err != nil {
-		fmt.Printf("\nerror: %v\n", err)
+		log.Printf("\nerror: %v\n", err)
 		return
 	}
-	fmt.Printf("Effective User: %v\n", user.GetLogin())
+	log.Printf("Effective User: %v\n", user.GetLogin())
 	// Rate.Limit should most likely be 5000 when authorized.
 	log.Printf("Rate: %#v\n", resp.Rate)
-	fmt.Println("")
+	log.Println("")
+
+	// Can we attempt to replace username and email values, if none where provided via the Environment?
+	if user.GetLogin() != "" {
+		if gh_username_issue_mention == "no-such-user" {
+			gh_username_issue_mention = user.GetLogin()
+		}
+	}
+	if user.GetEmail() != "" {
+		if gh_private_email == "private@email.com" {
+			gh_private_email = user.GetEmail()
+		}
+	}
 }
 
 // readValuesFromEnv
@@ -191,6 +204,14 @@ func readValuesFromEnv() {
 	gh_organization_name = os.Getenv("GITHUB_ORG_NAME")
 	gh_username_issue_mention = os.Getenv("GITHUB_COMMENT_MENTION")
 	gh_private_email = os.Getenv("GITHUB_EMAIL_PRIVATE")
+	gh_code_review_min, err := strconv.Atoi(os.Getenv("GITHUB_REVIEW_MIN_COUNT"))
+	if err != nil {
+		// Default to 2 if we are unable to parse the Int from a string
+		gh_code_review_min = 3
+		log.Println("Unable to determine Int value from Environment vairable GITHUB_REVIEW_MIN_COUNT, defaulting to 3.")
+	} else {
+		log.Printf("Read in %v as the desired minimum number of code reviewes", gh_code_review_min)
+	}
 }
 
 // checkValuesFromEnv
@@ -206,7 +227,7 @@ func checkValuesFromEnv() {
 	}
 	// Set reasonable defaults for the last 2 inputs, should they be nil
 	if gh_username_issue_mention == "" {
-		gh_username_issue_mention = "dav1d-c"
+		gh_username_issue_mention = "no-such-user"
 	}
 	if gh_private_email == "" {
 		gh_private_email = "private@email.com"

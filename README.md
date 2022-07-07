@@ -2,7 +2,20 @@
 
 ## Introduction
 
-@TODO
+### The Challenge
+
+1. Automate protection of the default (`main`) branch so that code reviews are required in order to puch or merge into the aforementioned branch whenever a new Repository is created within a GitHub Organization.
+1. Automate creation of a new Issue within the new Repository that mentions the protection which was added, mentioning yourself as a heads up that it ran successfully.
+
+### The Implementetion
+
+I have been meaning to freshen up my GOLang skills, so let's choose that as the programming language for implemention of the solution.
+
+Google has a wonderful GO module for intereacting with the GitHub v3 API: https://github.com/google/go-github
+
+Githubevents is a GO module that will allow us to handle webhook events easily: https://github.com/cbrgm/githubevents
+
+It seems like we ought to be able to combine these GO modules into something that can solve the challenge outlined above quite eloquently.
 
 ## Quick Start
 
@@ -32,13 +45,13 @@ go get
 go run main.go
 ```
 
-Also setup some Ingress (using ngrok) in another terminal window:
+Also setup some Ingress *(using `ngrok`)* in another terminal window:
 
 ```
 ngrok http 8080
 ```
 
-Then take the resulting `[random-bits-your-rev-ip].ngrok.io` FQDN from ngrok and use it to configure a webhook reciever in the GitHub UI of your GitHub Organization. Please ensure that Repository create events are contained within your events selection *(otherwise the desired events will not reach the webhook reciever for processing).*
+Then take the resulting `[random-bits-yo-ur-rev-ip].ngrok.io` FQDN from ngrok and use it to configure a webhook reciever in the GitHub UI of your GitHub Organization. Please ensure that Repository create events are contained within your events selection *(otherwise the desired events will not reach the webhook reciever for processing).*
 
 When creating new GitHub repositories under your Organization, it is important to make the following selections:
 * **Public** *(A limitation of my free service tier GitHub Organization)*
@@ -62,8 +75,16 @@ and the repository exists.
 
 @TODO
 
+## Other/Future Considerations
+
+* How to identify and apply protections to already created Repositories? *(migration of existing Repos)*
+* Should creation of the webhook be configure via the API at some point? *(instead of relying on manual configuration)*
+* Should Repostiory Creation be brokered through some kind of internal system? *(so that we can enforce `auto_init` of the first commit in the default branch and the correct visibility setting? Reduces chances of failing to apply protections)*
+
 ## Links
 
 * https://direnv.net/
 * https://github.com/google/go-github
 * https://github.com/cbrgm/githubevents
+* https://docs.github.com/en/developers/webhooks-and-events/webhooks/creating-webhooks
+* https://stackoverflow.com/questions/9670604/github-v3-api-how-to-create-initial-commit-for-my-shiny-new-repository
