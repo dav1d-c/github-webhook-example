@@ -1,4 +1,4 @@
-# github-webhook-example
+# [go-]github-webhook-example
 
 ## Introduction
 
