@@ -38,9 +38,11 @@ Also setup some Ingress (using ngrok) in another terminal window:
 ngrok http 8080
 ```
 
-Then take the resulting **[random-bits].ngrok.io** FQDN and use it to configure a webhook reciever in the GitHub UI of your GitHub Organization. Please ensure that Repository create events are contained within your events selection *(otherwise the desired events will not reach the webhook reciever for processing).*
+Then take the resulting `[random-bits-your-rev-ip].ngrok.io` FQDN from ngrok and use it to configure a webhook reciever in the GitHub UI of your GitHub Organization. Please ensure that Repository create events are contained within your events selection *(otherwise the desired events will not reach the webhook reciever for processing).*
 
-Happy WebHooking! :)
+When creating new GitHub repositories under your Organization, it is important to make the following selections:
+* Public *(A limitation of my free service tier GitHub Organization)*
+* Add a README file *(initializes the the default `main` branch, so that the code can protect it)*
 
 ## Process Diagram
 
