@@ -11,9 +11,11 @@
 
 I have been meaning to freshen up my GOLang skills, so let's choose that as the programming language for implemention of the solution.
 
-Google has a wonderful GO module for intereacting with the GitHub v3 API: https://github.com/google/go-github
+Google has a wonderful GO module for intereacting with the GitHub v3 API: 
+* https://github.com/google/go-github
 
-Githubevents is a GO module that will allow us to handle webhook events easily: https://github.com/cbrgm/githubevents
+Githubevents is a GO module that will allow us to handle webhook events easily: 
+* https://github.com/cbrgm/githubevents
 
 It seems like we ought to be able to combine these GO modules into something that can solve the challenge outlined above quite eloquently.
 
