@@ -100,6 +100,7 @@ An astutue observer would notice that this code example has redundant error hand
 
 ## Reference Links
 
+* https://go.dev/
 * https://direnv.net/
 * https://ngrok.com/
 * https://github.com/google/go-github
