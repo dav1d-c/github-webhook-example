@@ -71,7 +71,7 @@ and the repository exists.
 
 ## Process Diagram
 
-![Process Flow Diagram](imgs/process-flow.png "Process Flow Diagram")
+![Process Flow Diagram](https://github.com/dav1d-c/github-webhook-example/blob/main/imgs/process-flow.jpg?raw=true "Process Flow Diagram")
 
 ## Interesting
 
