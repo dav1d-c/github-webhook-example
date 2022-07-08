@@ -76,7 +76,7 @@ The following diagram shows the process flow, starting from the Developer reques
 
 ## Interesting
 
-### Initialzing a new Repository Throught the GitHub v3 API
+### Initialzing a new Repository Through the GitHub v3 API
 
 Although the code used to update the README.md file contents *(when it already exists)* is technically not required for the solution, however I was using this code path as an experiment in order to challenge myself and see if I could create the very first commit within the Repository (aka initialize the `main` branch) if it had not been done as part of the creation step. I managed to find this discussion, which goes back 10 years:
 
