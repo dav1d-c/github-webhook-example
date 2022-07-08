@@ -14,7 +14,7 @@ I have been meaning to freshen up my GOLang skills, so let's choose that as the 
 Google has a wonderful GO module for intereacting with the GitHub v3 API: 
 * https://github.com/google/go-github
 
-Githubevents is a GO module that will allow us to handle webhook events easily: 
+Githubevents is a GO module that will allow us to handle the desired webhook events easily using `.OnRepositoryEventCreated()`: 
 * https://github.com/cbrgm/githubevents
 
 It seems like we ought to be able to combine these GO modules into something that can solve the challenge outlined above quite eloquently.
@@ -57,9 +57,8 @@ Then take the resulting `[random-bits-your-ip-ad-dr].ngrok.io` FQDN from ngrok a
 
 When creating new GitHub repositories under your Organization, it is important to make the following selections:
 * **Public** *(A limitation of my free service tier GitHub Organization)*
-* **Add a README file** *(initializes the the default `main` branch, so that the code can protect it)*
 
-Testing pushes to `main` branch of the new Repoisitory using the git cli should now restrict direct pushes by non-owners:
+Testing pushes to the `main` branch of the new Repoisitory using the git cli should now restrict direct pushes by non-owners:
 
 ```
 ERROR: Permission to [Your-Org]/[Your-New-Repo].git denied to [non-owner-username].
@@ -71,28 +70,35 @@ and the repository exists.
 
 ## Process Diagram
 
+The following diagram shows the process flow, starting from the Developer requesting a new Repository within the GitHub Organization using the GitHub Web UI:
+
 ![Process Flow Diagram](https://github.com/dav1d-c/github-webhook-example/blob/main/imgs/process-flow.jpg?raw=true "Process Flow Diagram")
 
 ## Interesting
 
 ### Initialzing a new Repository Throught the GitHub v3 API
 
-An astutue observer would notice that the code used to update the README.md file contents is technically not required, but I was using this code to experiment in order to challenge myself and see if I could trying creating the very first commit within the Repository (aka initialize the `main` branch). I managed to find this discussion, that goes back 10 years:
+Although the code used to update the README.md file contents *(when it already exists)* is technically not required for the solution, however I was using this code path as an experiment in order to challenge myself and see if I could create the very first commit within the Repository (aka initialize the `main` branch) if it had not been done as part of the creation step. I managed to find this discussion, which goes back 10 years:
 
 * https://stackoverflow.com/questions/9670604/github-v3-api-how-to-create-initial-commit-for-my-shiny-new-repository
 
-Which also has a recent update from last year showing that there is a GitHub API end point does exist to accomplish this, but at the time of writing of this README.md I still have not found a way to accomplish this using `go-github`.
+Which also contains a recent update from last year showing that there is now a GitHub API end point which can accomplish this, after searching through the `go-github` module documentation I landed on the following function:
 
-### Initialzing a new Repository Throught the GitHub v3 API
+* https://pkg.go.dev/github.com/google/go-github/v45@v45.0.0/github#RepositoriesService.CreateFile
+
+The above function appears to be, and is indeed the missing function to invoke the method outlined in the earlier discussion in order to initialize the branch with it's very first commit. Stretch goal accomplished! :)
+
+### Error Handling
+
+An astutue observer would notice that this code example has redundant error handling. The errors are handled in both the callback to handle the event, plus a more generic error handler callback is also registered. Both are not required, but I had used this during testing of my code to ensure that I was not missing errors which would then be unhandled as a result.
 
 ## Other/Future Considerations
 
 * Test Coverage Needed! Clearly `TDD` *(Test Driven Development)* was not in play while cobbling together this proof of concept example.
-* How to identify and apply Branch Protections to already created Repositories? *(migration of existing Repos)*
-* Should creation of the webhook be configure via the API at some point? *(instead of relying on manual configuration)*
-* Should Repostiory Creation be brokered through some kind of internal system? *(so that we can enforce `auto_init` of the first commit in the default branch and the correct visibility setting? Reduces chances of failing to apply protections)*
+* How to identify and apply Branch Protections to already created Repositories? *(migration of existing Repos?)*
+* Should creation of the webhook be configure via the API at some point? *(instead of relying on manual configuration?)*
 
-## Links
+## Reference Links
 
 * https://direnv.net/
 * https://github.com/google/go-github
