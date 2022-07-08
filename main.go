@@ -78,6 +78,13 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			baseRef, _, err := client.Git.GetRef(ctx, gh_organization_name, repo.GetName(), "refs/heads/"+repo.GetDefaultBranch())
 			if err != nil {
 				log.Printf("Error retrieving Reference: %v\n", err)
+				// This isn't great, as a 409 here likely means the main branch has not been created yet.
+				// Let's make a note of that in an issue.
+				issue_title := "FAILED to Apply Repository Protection!"
+				issue_body := "Does the default branch (" + repo.GetDefaultBranch() + ") exist? Because Branch Protections can fail to apply automatically when the **Add a README.md File** option was not checked during Repository creation.\n\nATTN @" + gh_username_issue_mention
+				issue_repo := event.GetRepo().GetName()
+				_ = createIssue(client, ctx, gh_organization_name, issue_repo, issue_title, issue_body)
+
 				return err
 			}
 
@@ -149,16 +156,10 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			issue_body := "After the main branch was created, it was protected so that only properly reviewed code (with " + strconv.Itoa(gh_code_review_min) + " or more reviews) can be commited to the main branch\n\nCC @" + gh_username_issue_mention
 			issue_repo := event.GetRepo().GetName()
 
-			i := &github.IssueRequest{Title: &issue_title, Body: &issue_body}
-			new_issue, _, err := client.Issues.Create(ctx, gh_organization_name, issue_repo, i)
+			err = createIssue(client, ctx, gh_organization_name, issue_repo, issue_title, issue_body)
 			if err != nil {
-				log.Println(err)
 				return err
 			}
-
-			// DEBUG
-			log.Printf("Successfully created new issue: %v in repo: %v\n", new_issue.GetTitle(), event.GetRepo().GetName())
-			//log.Println(github.Stringify(new_issue))
 
 			return nil
 		})
@@ -175,6 +176,27 @@ func setupErorrCallback(handle *githubevents.EventHandler) {
 			log.Println(err)
 			return nil
 		})
+}
+
+// createIssue
+func createIssue(client *github.Client, ctx context.Context, org string, repo string, title string, body string) error {
+	issue_title := title
+	issue_body := body
+
+	// create a new IssueRequest using the provided inputs
+	i := &github.IssueRequest{Title: &issue_title, Body: &issue_body}
+	new_issue, _, err := client.Issues.Create(ctx, org, repo, i)
+	if err != nil {
+		log.Println("Problem encountered while attempting to create a GitHub Issue in the Repo " + repo)
+		log.Println(err)
+		return err
+	}
+
+	// DEBUG
+	log.Printf("Successfully created new issue: %v in repo: %v\n", new_issue.GetTitle(), repo)
+	//log.Println(github.Stringify(new_issue))
+
+	return nil
 }
 
 // printRateLimitUserInfo
