@@ -71,15 +71,19 @@ and the repository exists.
 
 ## Process Diagram
 
-@TODO
+![Process Flow Diagram](imgs/process-flow.png "Process Flow Diagram")
 
 ## Interesting
+
+### Initialzing a new Repository Throught the GitHub v3 API
 
 An astutue observer would notice that the code used to update the README.md file contents is technically not required, but I was using this code to experiment in order to challenge myself and see if I could trying creating the very first commit within the Repository (aka initialize the `main` branch). I managed to find this discussion, that goes back 10 years:
 
 * https://stackoverflow.com/questions/9670604/github-v3-api-how-to-create-initial-commit-for-my-shiny-new-repository
 
 Which also has a recent update from last year showing that there is a GitHub API end point does exist to accomplish this, but at the time of writing of this README.md I still have not found a way to accomplish this using `go-github`.
+
+### Initialzing a new Repository Throught the GitHub v3 API
 
 ## Other/Future Considerations
 
