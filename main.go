@@ -19,6 +19,7 @@ var gh_personal_access_token string = ""
 var gh_username_issue_mention string = ""
 var gh_private_email string = ""
 var gh_code_review_min int = 2
+var gh_readme_contents string = "\nYour Organization **loves <3 documentation,** please don't forget to update this file with specific information about this project!\n"
 
 // main
 func main() {
@@ -78,67 +79,16 @@ func setupProtectCallback(handle *githubevents.EventHandler, client *github.Clie
 			baseRef, _, err := client.Git.GetRef(ctx, gh_organization_name, repo.GetName(), "refs/heads/"+repo.GetDefaultBranch())
 			if err != nil {
 				log.Printf("Error retrieving Reference: %v\n", err)
-				// This isn't great, as a 409 here likely means the main branch has not been created yet.
-				// Let's make a note of that in an issue.
-				issue_title := "FAILED to Apply Repository Protection!"
-				issue_body := "Does the default branch (" + repo.GetDefaultBranch() + ") exist? Because Branch Protections can fail to apply automatically when the **Add a README.md File** option was not checked during Repository creation.\n\nATTN @" + gh_username_issue_mention
-				issue_repo := event.GetRepo().GetName()
-				_ = createIssue(client, ctx, gh_organization_name, issue_repo, issue_title, issue_body)
 
-				return err
-			}
-
-			// Create a tree with what to commit.
-			entries := []*github.TreeEntry{}
-			entries = append(entries, &github.TreeEntry{Path: github.String(string("README.md")), Type: github.String("blob"),
-				Content: github.String(string("# " + repo.GetName() + "\nYour Organization **loves <3 documentation,** please don't forget to update this file with specific information about this project!\n")),
-				Mode:    github.String("100644")})
-			var tree *github.Tree
-			tree, _, err = client.Git.CreateTree(ctx, gh_organization_name, repo.GetName(), *baseRef.Object.SHA, entries)
-			if err != nil {
-				log.Printf("Error creating Tree Entry: %v\n", err)
-				return err
-			}
-
-			// Get the parent commit to attach the commit to.
-			parent, _, err := client.Repositories.GetCommit(ctx, gh_organization_name, repo.GetName(), *baseRef.Object.SHA, nil)
-			if err != nil {
-				log.Printf("Error retrieiving commit: %v\n", err)
-				return err
-			}
-			// This is not always populated, but is needed.
-			parent.Commit.SHA = parent.SHA
-
-			// get the GitHub user object
-			user, _, err := client.Users.Get(ctx, "")
-			if err != nil {
-				log.Printf("setupProtectCallback] Error retrieving User object: %v\n", err)
-				return err
-			}
-
-			// Create the commit using the tree.
-			date := time.Now()
-			commit_msg := "Setting up Branch Protection for " + repo.GetName()
-			commit_login := user.GetLogin()
-			commit_email := user.GetEmail()
-			// Has the user marked their email address as private?
-			if commit_email == "" {
-				commit_email = gh_private_email
-			}
-			author := &github.CommitAuthor{Date: &date, Name: &commit_login, Email: &commit_email}
-			commit := &github.Commit{Author: author, Message: &commit_msg, Tree: tree, Parents: []*github.Commit{parent.Commit}}
-			newCommit, _, err := client.Git.CreateCommit(ctx, gh_organization_name, repo.GetName(), commit)
-			if err != nil {
-				log.Printf("Error creating commit: %v\n", err)
-				return err
-			}
-
-			// Attach the commit to the desired branch.
-			baseRef.Object.SHA = newCommit.SHA
-			_, _, err = client.Git.UpdateRef(ctx, gh_organization_name, repo.GetName(), baseRef, false)
-			if err != nil {
-				log.Printf("Error Updating Reference: %v\n", err)
-				return err
+				// Hmmmm, if the branch is not initialized, maybe we could do that now??
+				init_err := initRepoWithReadMe(client, ctx, repo, gh_organization_name)
+				if init_err != nil {
+					log.Println("Unable to Initiailize " + repo.GetDefaultBranch() + " with a first commit to that branch.")
+					return err
+				}
+			} else {
+				// If there is no error from the above, then what likely happened is the branch is already init'ed (and we can customize the README.me file instead)
+				updateRepoReadMe(client, ctx, baseRef, repo, gh_organization_name)
 			}
 
 			// Setup Branch Protection via ProtectionRequest
@@ -195,6 +145,77 @@ func createIssue(client *github.Client, ctx context.Context, org string, repo st
 	// DEBUG
 	log.Printf("Successfully created new issue: %v in repo: %v\n", new_issue.GetTitle(), repo)
 	//log.Println(github.Stringify(new_issue))
+
+	return nil
+}
+
+// initRepoWithReadMe
+func initRepoWithReadMe(client *github.Client, ctx context.Context, repo *github.Repository, org string) error {
+	// Create a simple little README.md file that we will use to initialize the main branch with
+	fileContent := []byte("# " + repo.GetName() + gh_readme_contents)
+
+	// Note: the file needs to be absent from the repository as you are not
+	// specifying a SHA reference here.
+	opts := &github.RepositoryContentFileOptions{
+		Message:   github.String("First Commit (Initialize Branch " + repo.GetDefaultBranch() + ")"),
+		Content:   fileContent,
+		Branch:    github.String(repo.GetDefaultBranch()),
+		Committer: &github.CommitAuthor{Name: github.String(gh_username_issue_mention), Email: github.String(gh_private_email)},
+	}
+	_, _, err := client.Repositories.CreateFile(ctx, org, repo.GetName(), "README.md", opts)
+	if err != nil {
+		log.Printf("Error Initializing Default Branch: %v\n", err)
+		return err
+	}
+	// DEBUG
+	log.Println("OH MY GOODNESS, did we really just init the main branch?!?!")
+
+	return nil
+}
+
+// updateRepoReadMe
+func updateRepoReadMe(client *github.Client, ctx context.Context, baseRef *github.Reference, repo *github.Repository, gh_organization_name string) error {
+	// Create a tree with what to commit.
+	entries := []*github.TreeEntry{}
+	entries = append(entries, &github.TreeEntry{Path: github.String(string("README.md")), Type: github.String("blob"),
+		Content: github.String(string("# " + repo.GetName() + gh_readme_contents)),
+		Mode:    github.String("100644")})
+	var tree *github.Tree
+	tree, _, err := client.Git.CreateTree(ctx, gh_organization_name, repo.GetName(), *baseRef.Object.SHA, entries)
+	if err != nil {
+		log.Printf("Error creating Tree Entry: %v\n", err)
+		return err
+	}
+
+	// Get the parent commit to attach the commit to.
+	parent, _, err := client.Repositories.GetCommit(ctx, gh_organization_name, repo.GetName(), *baseRef.Object.SHA, nil)
+	if err != nil {
+		log.Printf("Error retrieiving commit: %v\n", err)
+		return err
+	}
+	// This is not always populated, but is needed.
+	parent.Commit.SHA = parent.SHA
+
+	// Create the commit using the tree.
+	date := time.Now()
+	commit_msg := "Setting up Branch Protection for " + repo.GetName()
+	commit_login := gh_username_issue_mention
+	commit_email := gh_private_email
+	author := &github.CommitAuthor{Date: &date, Name: &commit_login, Email: &commit_email}
+	commit := &github.Commit{Author: author, Message: &commit_msg, Tree: tree, Parents: []*github.Commit{parent.Commit}}
+	newCommit, _, err := client.Git.CreateCommit(ctx, gh_organization_name, repo.GetName(), commit)
+	if err != nil {
+		log.Printf("Error creating commit: %v\n", err)
+		return err
+	}
+
+	// Attach the commit to the desired branch.
+	baseRef.Object.SHA = newCommit.SHA
+	_, _, err = client.Git.UpdateRef(ctx, gh_organization_name, repo.GetName(), baseRef, false)
+	if err != nil {
+		log.Printf("Error Updating Reference: %v\n", err)
+		return err
+	}
 
 	return nil
 }

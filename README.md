@@ -95,3 +95,4 @@ Which also has a recent update from last year showing that there is a GitHub API
 * https://github.com/cbrgm/githubevents
 * https://docs.github.com/en/developers/webhooks-and-events/webhooks/creating-webhooks
 * https://stackoverflow.com/questions/9670604/github-v3-api-how-to-create-initial-commit-for-my-shiny-new-repository
+* https://pkg.go.dev/github.com/google/go-github/v45@v45.0.0/github#RepositoriesService.CreateFile
