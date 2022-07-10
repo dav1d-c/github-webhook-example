@@ -25,7 +25,7 @@ It seems like we should able to combine these GO modules into something that can
 
 ## Quick Start
 
-After making yourself a copy of the contents of this Repository, one should be able to get this code up and running fairly quickly. I make pretty extensive use of **direnv** to allow me to customize environment variables quickly based on my current working directory *(and the .envrc file contained therein).* I have provided an example file (.envrc.example) in this Repository which can be quickly customized *(.envrc also exists inside the .gitignore file to prevent accidental commit of the "secrets" file):*
+After making yourself a copy of the contents of this Repository, one should be able to get this code up and running fairly quickly. I make pretty extensive use of **direnv** to allow me to customize environment variables quickly based on my current working directory *(and the .envrc file contained therein).* I have provided an example file (`.envrc.example`) in this Repository which can be quickly customized *(.envrc also exists inside the `.gitignore` file to prevent accidental commit of the "secrets" file):*
 
 ```
 $ git clone https://github.com/dav1d-c/github-webhook-example.git
@@ -38,7 +38,7 @@ direnv: loading ~/Development/git/github-webhook-example/.envrc
 direnv: export +GITHUB_COMMENT_MENTION +GITHUB_EMAIL_PRIVATE +GITHUB_ORG_NAME +GITHUB_PERSONAL_ACCESS_TOKEN +GITHUB_WEBHOOK_SECRET
 ```
 
-If one doesn't have direnv and want to run the webhook reciever without it, then the .envrc file can be sourced into your running shell *(assumes BASH or equivilent):*
+If one doesn't have direnv and wanted to run the webhook reciever without it, then the .envrc file can be sourced into your running shell *(assumes BASH or equivilent):*
 
 ```
 source .envrc
@@ -103,6 +103,7 @@ An astutue observer would notice that this code example has redundant error hand
 * Should creation of the webhook be configure via the API at some point? *(instead of relying on manual configuration?)*
 * Replace secrets read from Environment variables with an integration to a proper secret store (i.e. Vault)
 * Refactor error handling into a single mechanism, once we are sure all errors are proper caught and handled in our code *(see previous section for more details).*
+* Logging shipping to an external log collection system, so that we have a long running and auditable history of events.
 
 ## Reference Links
 
