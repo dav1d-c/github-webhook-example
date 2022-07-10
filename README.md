@@ -5,15 +5,15 @@
 ### The Challenge
 
 1. Automate protection of the default (`main`) branch so that code reviews are required in order to push or merge into the aforementioned branch whenever a new Repository is created within a specific GitHub Organization.
-1. Automate creation of a new Issue within the new Repository that mentions the protection which were added, mentioning yourself as a heads up that this automation executed successfully.
+1. Automate creation of a new Issue within the new Repository that mentions the protection which was added, mentioning yourself as a heads up that this automation executed successfully.
 
 ### The Implementetion
 
-I have been meaning to freshen up my GOLang skills, so let's choose that as the programming language for implemention of the solution. A couple of thoughts spring to mind after some cursory research:
+I have been meaning to freshen up my **GOLang** skills, so let's choose that as the programming language for implemention of the solution. A couple of thoughts spring to mind after some cursory research:
 
 * GitHub offers a Branch Protection feature, which can be used to enforce controls on certain Repository branches.
 * Branch Protections can be applied programmatically using the GitHub API.
-* We can register Webhooks with GitHub which can be used to recieve events such a Repository create events *(that could trigger our automation).*
+* We can register Webhooks with GitHub which can then be used to receive events such as Repository create events *(that could trigger our automation).*
 
 Google has a wonderful GO module for intereacting with the GitHub v3 API: 
 * https://github.com/google/go-github
@@ -38,7 +38,7 @@ direnv: loading ~/Development/git/github-webhook-example/.envrc
 direnv: export +GITHUB_COMMENT_MENTION +GITHUB_EMAIL_PRIVATE +GITHUB_ORG_NAME +GITHUB_PERSONAL_ACCESS_TOKEN +GITHUB_WEBHOOK_SECRET
 ```
 
-If one doesn't have direnv and wanted to run the webhook reciever without it, then the .envrc file can be sourced into your running shell *(assumes BASH or equivilent):*
+If one doesn't have direnv and wanted to run the webhook receiver without it, then the .envrc file can be sourced into your running shell *(assumes BASH or equivilent):*
 
 ```
 source .envrc
@@ -57,7 +57,7 @@ Also setup some Ingress *(using `ngrok`)* in another terminal window:
 ngrok http 8080
 ```
 
-Then take the resulting `[random-bits-your-ip-ad-dr].ngrok.io` FQDN from ngrok and use it to configure a webhook reciever in the GitHub UI of your GitHub Organization. Please ensure that Repository create events are contained within your events selection *(otherwise the desired events will not reach the webhook reciever for processing).* Also select `application/json` as the mime-type for the content delivery.
+Then take the resulting `[random-bits-your-ip-ad-dr].ngrok.io` FQDN from ngrok and use it to configure a webhook receiver in the GitHub UI of your GitHub Organization. Please ensure that Repository create events are contained within your events selection *(otherwise the desired events will not reach the webhook receiver for processing).* Also select `application/json` as the mime-type for the content delivery.
 
 When creating a new GitHub repositories under your Organization, it is important to make the following selections:
 * **Public** *(A known limitation of my Free service tier GitHub Organization)*
