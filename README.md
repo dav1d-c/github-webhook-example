@@ -90,7 +90,7 @@ Which also contains a recent update from last year showing that there is now a G
 
 * https://pkg.go.dev/github.com/google/go-github/v45@v45.0.0/github#RepositoriesService.CreateFile
 
-The above function appears to be, and is indeed the missing function to invoke the method outlined in the earlier discussion in order to initialize the branch with its very first commit. When unable to locate the base Reference using the API, we can post a fresh README.md file and use that commit to initialize the `main` branch. There also exists code to update the contents of README.md if it already exists. I added this code so that the "Welcome" README.md contents can be customized the same way in either code path, so that the user will have a consistent experience regardless of which path is taken. Now that the branch exists, it can be protected!
+The above function appears to be, and is indeed the missing function to invoke the method outlined in the earlier discussion in order to initialize the branch with its very first commit. When unable to locate the base Reference using the API, we can post a fresh `README.md` file and use that commit to initialize the `main` branch. There also exists code to update the contents of `README.md` if it already exists. I added this code so that the "Welcome" `README.md` contents can be customized the same way in either code path, so that the user will have a consistent experience regardless of which path is taken. Now that the branch exists, it can be protected!
 
 ### Error Handling
 
@@ -99,11 +99,11 @@ An astutue observer would notice that this code example has redundant error hand
 ## Other/Future Considerations
 
 * **Test Coverage Needed!** Clearly `TDD` *(Test Driven Development)* was not in play while cobbling together this proof of concept example.
-* How to identify and apply Branch Protections to already created Repositories? *(migration of existing Repositories?)*
-* Should creation of the webhook be configure via the API at some point? *(instead of relying on manual configuration?)*
-* Replace secrets read from Environment variables with an integration to a proper secret store (i.e. Vault)
-* Refactor error handling into a single mechanism, once we are sure all errors are proper caught and handled in our code *(see previous section for more details).*
-* Logging shipping to an external log collection system, so that we have a long running and auditable history of events.
+* How to identify and apply Branch Protections to already created Repositories within the Organization? *(migration of existing Repositories?)*
+* Should creation of the webhook be configured via the API at some point? *(instead of relying on manual configuration using GitHub Web UI?)*
+* Replace secrets read from Environment variables with an integration to a proper secret store *(i.e. Vault).*
+* Refactor error handling into a single mechanism, once we are certain all errors are properly caught and handled in our code *(see previous section for more details).*
+* Process logs shipped to an external log collection system, so that we have a long running and auditable history of automated protection events.
 
 ## Reference Links
 
