@@ -13,12 +13,12 @@ I have been meaning to freshen up my GOLang skills, so let's choose that as the 
 
 * GitHub offers a Branch Protection feature, which can be used to enforce controls on certain Repository branches.
 * Branch Protections can be applied programmatically using the GitHub API.
-* We can register Webhooks with GitHub which can be used to recieve events such a Repository create events (that could trigger our automation).
+* We can register Webhooks with GitHub which can be used to recieve events such a Repository create events *(that could trigger our automation).*
 
 Google has a wonderful GO module for intereacting with the GitHub v3 API: 
 * https://github.com/google/go-github
 
-Githubevents is a GO module that will allow us to handle the desired webhook events easily using the `.OnRepositoryEventCreated()` function: 
+Githubevents is a GO module (built ontop of `go-github`) that will allow us to handle the desired webhook events easily using the `.OnRepositoryEventCreated()` function:
 * https://github.com/cbrgm/githubevents
 
 It seems like we should able to combine these GO modules into something that can solve the challenge outlined above quite eloquently.
