@@ -167,8 +167,6 @@ func initRepoWithReadMe(client *github.Client, ctx context.Context, repo *github
 		log.Printf("Error Initializing Default Branch: %v\n", err)
 		return err
 	}
-	// DEBUG
-	log.Println("OH MY GOODNESS, did we really just init the main branch?!?!")
 
 	return nil
 }
