@@ -110,6 +110,7 @@ An astutue observer would notice that this code example has redundant error hand
 * https://go.dev/
 * https://direnv.net/
 * https://ngrok.com/
+* https://docs.github.com/en/rest
 * https://github.com/google/go-github
 * https://github.com/cbrgm/githubevents
 * https://docs.github.com/en/developers/webhooks-and-events/webhooks/creating-webhooks
