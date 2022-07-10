@@ -80,7 +80,7 @@ The following diagram shows the process flow, starting from the Developer reques
 
 ## Interesting
 
-### Initialzing a new Repository Through the GitHub v3 API
+### Initializing a new Repository Through the GitHub v3 API
 
 Although hints/clues were provided regarding how to ensure the Repository's first branch is initialized during creation through the Web UI by checking the **Add README.md file** box during creation, there is no practical way to enforce this every time a member of our Organization creates a new Repository. I concluded that there must be a better way using the GitHub API *(and I was determined to find it).* During my research I managed to find this discussion, which goes back 10 years:
 
