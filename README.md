@@ -94,7 +94,7 @@ The above function appears to be, and is indeed the missing function to invoke t
 
 ### Error Handling
 
-An astutue observer would notice that this code example has redundant error handling. The errors are handled in both the callback to handle the event, and also in a more generic error handler callback which is also registered. Both are technically not required, but I had used both during the testing phase of my development to ensure that I was not missing any errors, which would then be unhandled as a result.
+An astutue observer would notice that this code example has redundant error handling. The errors are handled in both the callback to handle the event, and also in a more generic error handler callback which is also registered. Both are technically not required, but I had been using both during the testing phase of my development to ensure that I was not missing any errors, which would then be unhandled as a result.
 
 ## Other/Future Considerations
 
